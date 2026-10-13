@@ -4,242 +4,159 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>UBG Central</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --accent: #38bdf8;
-            --text: #f8fafc;
-            --text-secondary: #94a3b8;
+        :root { 
+            --primary: #38bdf8; 
+            --bg: #0f172a; 
+            --card: #1e293b; 
+            --card-border: #334155; 
         }
-        body {
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text);
+        body { 
+            background-color: var(--bg); 
+            color: #f8fafc; 
+            font-family: system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
             margin: 0;
-            padding: 0;
+            padding-bottom: 50px;
         }
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1.5rem 2rem;
-            background-color: var(--card-bg);
-            border-bottom: 1px solid #334155;
+        .game-card {
+            background: var(--card);
+            border: 1px solid var(--card-border);
+            transition: all 0.2s ease;
         }
-        h1 {
-            margin: 0;
-            color: var(--accent);
-            font-size: 1.8rem;
-        }
-        .btn {
-            background-color: var(--accent);
-            color: #0f172a;
-            border: none;
-            padding: 0.6rem 1.2rem;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        .btn:hover {
-            opacity: 0.9;
-        }
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-            gap: 1.5rem;
-        }
-        .card {
-            background-color: var(--card-bg);
-            border-radius: 10px;
-            overflow: hidden;
-            border: 1px solid #334155;
-            transition: transform 0.2s, box-shadow 0.2s;
-            cursor: pointer;
-        }
-        .card:hover {
-            transform: translateY(-4px);
+        .game-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-3px);
             box-shadow: 0 10px 20px rgba(56, 189, 248, 0.1);
-        }
-        .card img {
-            width: 100%;
-            height: 140px;
-            object-fit: cover;
-            background-color: #334155;
-        }
-        .card-content {
-            padding: 1rem;
-        }
-        .card-title {
-            font-size: 1.1rem;
-            font-weight: bold;
-            margin: 0;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        .modal-content {
-            background-color: var(--card-bg);
-            padding: 2rem;
-            border-radius: 10px;
-            width: 100%;
-            max-width: 450px;
-            border: 1px solid #334155;
-        }
-        .modal-content h2 { margin-top: 0; color: var(--accent); }
-        .form-group {
-            margin-bottom: 1rem;
-        }
-        .form-group label {
-            display: block;
-            margin-bottom: 0.4rem;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-        .form-group input, .form-group textarea, .form-group select {
-            width: 100%;
-            padding: 0.6rem;
-            background-color: #0f172a;
-            border: 1px solid #334155;
-            color: var(--text);
-            border-radius: 4px;
-            box-sizing: border-box;
-        }
-        .form-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.8rem;
-            margin-top: 1.5rem;
-        }
-        .btn-secondary {
-            background-color: transparent;
-            color: var(--text-secondary);
-            border: 1px solid #334155;
         }
     </style>
 </head>
-<body>
+<body class="p-6">
 
-    <header>
-        <h1>🎮 UBG Central</h1>
-        <button class="btn" onclick="openModal()">+ Add Game</button>
+    <!-- Header -->
+    <header class="max-w-6xl mx-auto flex justify-between items-center bg-slate-800/60 backdrop-blur-md border border-slate-700 p-4 rounded-2xl mb-8">
+        <div class="flex items-center gap-3">
+            <i class="fas fa-gamepad text-2xl text-sky-400"></i>
+            <h1 class="text-2xl font-bold tracking-wide">UBG Central</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <input type="text" id="searchInput" placeholder="Search games..." class="bg-slate-900 border border-slate-700 px-4 py-2 rounded-xl text-sm focus:outline-none focus:border-sky-400 text-white">
+            <button onclick="openModal()" class="bg-sky-400 text-slate-950 px-4 py-2 rounded-xl font-bold hover:opacity-90 transition">+ Add Game</button>
+        </div>
     </header>
 
-    <div class="container">
-        <div id="game-grid" class="grid">
-            <p style="color: var(--text-secondary);">Loading games...</p>
+    <!-- Game Grid -->
+    <main class="max-w-6xl mx-auto">
+        <div id="gameGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            <p class="text-slate-400 col-span-full">Loading games...</p>
         </div>
-    </div>
+    </main>
 
-    <!-- Submit Game Modal -->
-    <div id="gameModal" class="modal">
-        <div class="modal-content">
-            <h2>Add New Game</h2>
-            <form id="gameForm" onsubmit="submitGame(event)">
-                <div class="form-group">
-                    <label>Game Title</label>
-                    <input type="text" id="gameTitle" required placeholder="e.g. Retro Bowl">
+    <!-- Add Game Modal -->
+    <div id="gameModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center z-50">
+        <div class="bg-slate-900 border border-slate-700 p-6 rounded-2xl w-full max-w-md shadow-2xl">
+            <h2 class="text-xl font-bold mb-4 text-sky-400">Add New Game</h2>
+            <form onsubmit="submitGame(event)">
+                <div class="mb-4">
+                    <label class="block text-xs uppercase font-semibold text-slate-400 mb-1">Game Title</label>
+                    <input type="text" id="gameTitle" required class="w-full bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-white text-sm focus:outline-none focus:border-sky-400" placeholder="e.g. Retro Bowl">
                 </div>
-                <div class="form-group">
-                    <label>Thumbnail Image URL</label>
-                    <input type="url" id="gameIcon" required placeholder="https://example.com/icon.png">
+                <div class="mb-4">
+                    <label class="block text-xs uppercase font-semibold text-slate-400 mb-1">Thumbnail Image URL</label>
+                    <input type="url" id="gameIcon" required class="w-full bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-white text-sm focus:outline-none focus:border-sky-400" placeholder="https://example.com/icon.png">
                 </div>
-                <div class="form-group">
-                    <label>Submission Type</label>
-                    <select id="gameType" onchange="toggleContentLabel()">
+                <div class="mb-4">
+                    <label class="block text-xs uppercase font-semibold text-slate-400 mb-1">Submission Type</label>
+                    <select id="gameType" onchange="toggleLabel()" class="w-full bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-white text-sm focus:outline-none focus:border-sky-400">
                         <option value="url">External Link / Embed URL</option>
                         <option value="code">Raw HTML Code</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label id="contentLabel">Game URL (iframe/link)</label>
-                    <textarea id="gameContent" rows="4" required placeholder="https://example.com/game/index.html"></textarea>
+                <div class="mb-6">
+                    <label id="contentLabel" class="block text-xs uppercase font-semibold text-slate-400 mb-1">Game URL</label>
+                    <textarea id="gameContent" rows="3" required class="w-full bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-white text-sm focus:outline-none focus:border-sky-400" placeholder="https://example.com/game/index.html"></textarea>
                 </div>
-                <div class="form-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                    <button type="submit" class="btn" id="submitBtn">Publish Game</button>
+                <div class="flex justify-end gap-3">
+                    <button type="button" onclick="closeModal()" class="bg-slate-800 text-slate-300 px-4 py-2 rounded-xl text-sm font-semibold hover:bg-slate-700">Cancel</button>
+                    <button type="submit" id="submitBtn" class="bg-sky-400 text-slate-950 px-5 py-2 rounded-xl text-sm font-bold hover:opacity-90">Publish</button>
                 </div>
             </form>
         </div>
     </div>
 
+    <!-- Play Game Modal -->
+    <div id="playModal" class="fixed inset-0 bg-black/95 hidden flex flex-col z-50">
+        <div class="flex justify-between items-center px-6 py-3 bg-slate-900 border-b border-slate-800">
+            <h3 id="playTitle" class="font-bold text-lg text-white"></h3>
+            <button onclick="closePlayModal()" class="text-slate-400 hover:text-white text-xl"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="flex-1 w-full h-full">
+            <iframe id="gameIframe" class="w-full h-full border-none"></iframe>
+        </div>
+    </div>
+
     <script>
         const WORKER_URL = "https://ubgcentralkeys.gdharry123.workers.dev/";
+        let gamesList = [];
 
-        // Load games on startup
         async function loadGames() {
-            const grid = document.getElementById('game-grid');
+            const grid = document.getElementById('gameGrid');
             try {
-                // Fetch directly from your repository's raw games.json file
                 const res = await fetch('games.json?t=' + Date.now());
-                if (!res.ok) throw new Error("Could not load games.json");
-                const games = await res.json();
+                if (!res.ok) throw new Error("Failed to load");
+                gamesList = await res.json();
 
-                if (games.length === 0) {
-                    grid.innerHTML = `<p style="color: var(--text-secondary);">No games added yet. Click "+ Add Game" to upload one!</p>`;
+                if (gamesList.length === 0) {
+                    grid.innerHTML = `<p class="text-slate-400 col-span-full">No games added yet. Click "+ Add Game" to get started!</p>`;
                     return;
                 }
 
                 grid.innerHTML = '';
-                games.forEach(game => {
+                gamesList.forEach(game => {
                     const card = document.createElement('div');
-                    card.className = 'card';
-                    card.onclick = () => window.open(game.url, '_blank');
+                    card.className = 'game-card rounded-2xl overflow-hidden cursor-pointer flex flex-col';
+                    card.onclick = () => openPlayModal(game.url, game.title);
                     card.innerHTML = `
-                        <img src="${game.thumb}" alt="${game.title}" onerror="this.src='https://via.placeholder.com/220x140?text=No+Image'">
-                        <div class="card-content">
-                            <p class="card-title">${game.title}</p>
+                        <div class="aspect-square w-full bg-slate-800 overflow-hidden">
+                            <img src="${game.thumb}" alt="${game.title}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/200?text=No+Image'">
+                        </div>
+                        <div class="p-3 text-center truncate">
+                            <span class="text-sm font-semibold truncate block">${game.title}</span>
                         </div>
                     `;
                     grid.appendChild(card);
                 });
             } catch (err) {
-                grid.innerHTML = `<p style="color: #f87171;">Error loading games. Make sure games.json exists in your repository.</p>`;
+                grid.innerHTML = `<p class="text-red-400 col-span-full">Error loading games. Make sure games.json is in your repository.</p>`;
             }
         }
 
-        function openModal() {
-            document.getElementById('gameModal').style.display = 'flex';
+        function openModal() { document.getElementById('gameModal').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('gameModal').classList.add('hidden'); }
+
+        function openPlayModal(url, title) {
+            document.getElementById('playTitle').textContent = title;
+            document.getElementById('gameIframe').src = url;
+            document.getElementById('playModal').classList.remove('hidden');
         }
 
-        function closeModal() {
-            document.getElementById('gameModal').style.display = 'none';
-            document.getElementById('gameForm').reset();
+        function closePlayModal() {
+            document.getElementById('playModal').classList.add('hidden');
+            document.getElementById('gameIframe').src = '';
         }
 
-        function toggleContentLabel() {
+        function toggleLabel() {
             const type = document.getElementById('gameType').value;
             const label = document.getElementById('contentLabel');
-            const contentInput = document.getElementById('gameContent');
-            if (type === 'code') {
-                label.innerText = 'HTML Game Code';
-                contentInput.placeholder = '<script>document.write("Hello Game");</script>';
-            } else {
-                label.innerText = 'Game URL (iframe/link)';
-                contentInput.placeholder = 'https://example.com/game/index.html';
-            }
+            label.textContent = type === 'code' ? 'HTML Game Code' : 'Game URL';
         }
 
         async function submitGame(e) {
             e.preventDefault();
             const btn = document.getElementById('submitBtn');
-            btn.innerText = 'Publishing...';
+            btn.textContent = 'Publishing...';
             btn.disabled = true;
 
             const title = document.getElementById('gameTitle').value;
@@ -255,7 +172,7 @@
                 });
 
                 const data = await res.json();
-                if (!res.ok) throw new Error(data.error || 'Failed to submit game');
+                if (!res.ok) throw new Error(data.error || 'Failed to publish');
 
                 alert('Game published successfully!');
                 closeModal();
@@ -263,10 +180,37 @@
             } catch (err) {
                 alert('Error: ' + err.message);
             } finally {
-                btn.innerText = 'Publish Game';
+                btn.textContent = 'Publish';
                 btn.disabled = false;
             }
         }
+
+        document.getElementById('searchInput').oninput = (e) => {
+            const query = e.target.value.toLowerCase();
+            const filtered = gamesList.filter(g => g.title.toLowerCase().includes(query));
+            const grid = document.getElementById('gameGrid');
+            grid.innerHTML = '';
+            
+            if (filtered.length === 0) {
+                grid.innerHTML = `<p class="text-slate-400 col-span-full">No games found.</p>`;
+                return;
+            }
+
+            filtered.forEach(game => {
+                const card = document.createElement('div');
+                card.className = 'game-card rounded-2xl overflow-hidden cursor-pointer flex flex-col';
+                card.onclick = () => openPlayModal(game.url, game.title);
+                card.innerHTML = `
+                    <div class="aspect-square w-full bg-slate-800 overflow-hidden">
+                        <img src="${game.thumb}" alt="${game.title}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="p-3 text-center truncate">
+                        <span class="text-sm font-semibold truncate block">${game.title}</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        };
 
         loadGames();
     </script>
