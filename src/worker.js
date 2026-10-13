@@ -1,97 +1,103 @@
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
+    const corsHeaders = {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+    };
+
+    // Handle browser preflight CORS checks
+    if (request.method === "OPTIONS") {
+      return new Response(null, { headers: corsHeaders });
+    }
+
     if (request.method !== "POST") {
-      return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405 });
+      return new Response(JSON.stringify({ error: "Method not allowed" }), {
+        status: 405,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
     }
 
     try {
       const { title, iconUrl, type, content } = await request.json();
-      if (!title || !content || !iconUrl) {
-        return new Response(JSON.stringify({ error: "Missing required fields" }), { status: 400 });
+
+      if (!title || !iconUrl || !content) {
+        return new Response(JSON.stringify({ error: "Missing required fields" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" }
+        });
       }
 
-      const owner = "YOUR_GITHUB_USERNAME";
-      const repo = "YOUR_REPO_NAME";
-      const token = env.GITHUB_TOKEN; // Automatically pulled from Cloudflare Secrets
+      // Determine final game URL based on submission type
+      let gameUrl = content;
+      if (type === 'code') {
+        // Encodes raw HTML code into a safe data URI
+        gameUrl = `data:text/html;charset=utf-8,${encodeURIComponent(content)}`;
+      }
+
+      const repo = "hazzatazza/ubg-central";
+      const filePath = "games.json";
+      const githubToken = env.GITHUB_TOKEN;
 
       // 1. Fetch current games.json from GitHub
-      const getRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/games.json`, {
+      const getRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
         headers: {
-          "Authorization": `Bearer ${token}`,
-          "User-Agent": "UBG-Central-Worker",
-          "Accept": "application/vnd.github+json"
+          "Authorization": `Bearer ${githubToken}`,
+          "User-Agent": "Cloudflare-Worker"
         }
       });
 
-      let currentData = [];
+      let games = [];
       let sha = null;
+
       if (getRes.ok) {
         const fileData = await getRes.json();
         sha = fileData.sha;
-        currentData = JSON.parse(atob(fileData.content));
+        const decodedContent = atob(fileData.content);
+        games = JSON.parse(decodedContent);
       }
 
-      const gameId = title.toLowerCase().replace(/[^a-z0-9]/g, "-") + "-" + Date.now();
-      let gameUrl = content;
-
-      // 2. If submitted as raw code, create a separate HTML file for it
-      if (type === "code") {
-        const codePath = `games/${gameId}.html`;
-        const encodedCode = btoa(unescape(encodeURIComponent(content)));
-        
-        await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${codePath}`, {
-          method: "PUT",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-            "User-Agent": "UBG-Central-Worker",
-            "Accept": "application/vnd.github+json",
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            message: `Add game code file: ${title}`,
-            content: encodedCode,
-            branch: "main"
-          })
-        });
-        gameUrl = `/${codePath}`;
-      }
-
-      // 3. Append the new game to the JSON array
-      currentData.push({
-        id: gameId,
+      // 2. Add the new game to the list
+      const newGame = {
+        id: Date.now().toString(),
         title: title,
         thumb: iconUrl,
         url: gameUrl,
-        type: "game"
-      });
+        type: type
+      };
 
-      // 4. Commit updated games.json back to GitHub
-      const updateRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/games.json`, {
+      games.push(newGame);
+
+      // 3. Commit the updated games.json back to GitHub
+      const putRes = await fetch(`https://api.github.com/repos/${repo}/contents/${filePath}`, {
         method: "PUT",
         headers: {
-          "Authorization": `Bearer ${token}`,
-          "User-Agent": "UBG-Central-Worker",
-          "Accept": "application/vnd.github+json",
-          "Content-Type": "application/json"
+          "Authorization": `Bearer ${githubToken}`,
+          "Content-Type": "application/json",
+          "User-Agent": "Cloudflare-Worker"
         },
         body: JSON.stringify({
-          message: `Update games.json with new game: ${title}`,
-          content: btoa(unescape(encodeURIComponent(JSON.stringify(currentData, null, 2)))),
-          sha: sha,
-          branch: "main"
+          message: `Add game: ${title}`,
+          content: btoa(JSON.stringify(games, null, 2)),
+          sha: sha
         })
       });
 
-      if (!updateRes.ok) {
-        const errText = await updateRes.text();
-        throw new Error("GitHub API Error: " + errText);
+      if (!putRes.ok) {
+        const errJson = await putRes.json();
+        throw new Error(errJson.message || "Failed to update GitHub repository");
       }
 
-      return new Response(JSON.stringify({ success: true }), {
-        headers: { "Content-Type": "application/json" }
+      return new Response(JSON.stringify({ success: true, game: newGame }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
+
     } catch (err) {
-      return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: { "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: err.message }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
     }
   }
 };
